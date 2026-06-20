@@ -1,0 +1,63 @@
+# =========================
+# Python backend
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.local
+.env.production
+.env.*.local
+.venv/
+venv/
+*.sqlite3
+
+
+
+# FastAPI / logs
+logs/
+*.log
+
+# =========================
+# Node / React frontend
+# =========================
+frontend/node_modules/
+node_modules/
+dist/
+build/
+.vite/
+
+# =========================
+# OS / IDE
+# =========================
+.DS_Store
+.vscode/
+.idea/
+
+# =========================
+# Docker
+# =========================
+docker-data/
+
+# =========================
+# Claude / AI tools
+# =========================
+.claude/
+
+# =========================
+# Dev / data / migration scripts (NOT part of the deployed app).
+# These are one-off local helpers — the Docker deployment only needs
+# backend/, frontend/, docker-compose*.yml and the server .env.
+# (get_data.py / post_data.py are intentionally kept — they're the bot client.)
+# =========================
+convert_mongo_uri.py
+sample.py
+make_dummy.py
+make5.py
+reset_acme.py
+update_field.py
+test_atlas.py
+test_flow.py
+test_botflow.py
+migrate_to_atlas.py
