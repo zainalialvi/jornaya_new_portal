@@ -1,0 +1,46 @@
+# Production stack — backend talks to MongoDB Atlas (no local mongo container),
+# frontend served on host port 80. Values come from the server's .env file.
+#
+# Deploy on the VM:
+#   docker compose -f docker-compose.prod.yml up -d --build
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jornaya_backend
+    restart: unless-stopped
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      MONGO_DB_NAME: ${MONGO_DB_NAME:-form_dashboard}
+      MONGO_TLS: ${MONGO_TLS:-true}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://138.199.193.196}
+    ports:
+      - "${BACKEND_PORT:-8989}:8989"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8989/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://138.199.193.196:8989}
+    container_name: jornaya_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

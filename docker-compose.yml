@@ -1,0 +1,62 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: jornaya_mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jornaya_backend
+    restart: unless-stopped
+    environment:
+      # Inside compose the backend talks to the `mongo` service by name, NOT
+      # localhost. For an external DB (e.g. Atlas in production) override
+      # MONGO_URI / MONGO_TLS here or via host env vars.
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: ${MONGO_DB_NAME:-form_dashboard}
+      MONGO_TLS: "false"
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_IN_PROD}
+    ports:
+      - "${BACKEND_PORT:-8989}:8989"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8989/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8989}
+    container_name: jornaya_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mongo_data:
